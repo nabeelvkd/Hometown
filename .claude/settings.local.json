@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm --version)",
+      "Bash(env)",
+      "Read(//c/Users/muhammed.nabeel/OneDrive/Documents/**)",
+      "Read(//c/Users/muhammed.nabeel/Documents/**)",
+      "Read(//c/Users/muhammed.nabeel/OneDrive/**)",
+      "Bash(node -e \"try{console.log\\(require\\('./node_modules/@expo/metro-config/package.json'\\).version\\)}catch\\(e\\){console.log\\('MISSING'\\)}\")",
+      "Bash(npm ls *)",
+      "Bash(grep -vE \"^\\\\.$|^\\\\.\\\\.$|node_modules|\\\\.git$\")",
+      "Bash(grep -iE \"src|component|screen|app$\")",
+      "Bash(node -e \"try{console.log\\('v'+require\\('./node_modules/react-native-svg/package.json'\\).version\\)}catch\\(e\\){console.log\\('MISSING'\\)}\")",
+      "Bash(node -e \"try{console.log\\('v'+require\\('./node_modules/lucide-react-native/package.json'\\).version\\)}catch\\(e\\){console.log\\('MISSING'\\)}\")",
+      "Bash(node -e \"try{console.log\\(JSON.stringify\\(require\\('./node_modules/lucide-react-native/package.json'\\).peerDependencies\\)\\)}catch\\(e\\){console.log\\('n/a'\\)}\")",
+      "Bash(node -e \"try{console.log\\('v'+require\\('./node_modules/nativewind/package.json'\\).version\\)}catch\\(e\\){console.log\\('MISSING'\\)}\")",
+      "Bash(node -e \"try{const b=require\\('./node_modules/expo/tsconfig.base.json'\\); console.log\\('jsx:', b.compilerOptions && b.compilerOptions.jsx\\)}catch\\(e\\){console.log\\('no base:', e.message\\)}\")",
+      "Bash(node -e \"console.log\\(require\\('./package.json'\\).scripts.start\\)\")",
+      "Bash(echo \"start script: $\\(node -e \"console.log\\(require\\('./package.json'\\).scripts.start\\)\"\\)\")",
+      "Bash(node -e ' *)",
+      "PowerShell(Get-NetTCPConnection -LocalPort 5001 -State Listen -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }; Start-Sleep 1; \"5001 cleared\")"
+    ]
+  }
+}

@@ -1,0 +1,60 @@
+### Nattile API — sample requests (VS Code REST Client / IntelliJ HTTP)
+@base = http://localhost:5000
+@districtId = REPLACE_WITH_DISTRICT_ID
+@blockId = REPLACE_WITH_BLOCK_ID
+@villageId = REPLACE_WITH_VILLAGE_ID
+
+### Health
+GET {{base}}/health
+
+### List districts
+GET {{base}}/api/locations/districts
+
+### List blocks in a district
+GET {{base}}/api/locations/blocks?district={{districtId}}
+
+### List villages in a block
+GET {{base}}/api/locations/villages?block={{blockId}}
+
+### Home (village-first aggregation)
+GET {{base}}/api/home?villageId={{villageId}}
+
+### Categories
+GET {{base}}/api/categories?kind=business
+
+### Businesses (filtered by village)
+GET {{base}}/api/businesses?village={{villageId}}&category=supermarket
+
+### Search
+GET {{base}}/api/search?q=bakery&village={{villageId}}
+
+### Emergency contacts
+GET {{base}}/api/emergency-contacts?village={{villageId}}
+
+### Announcements
+GET {{base}}/api/announcements?village={{villageId}}
+
+### Login (seeded super admin)
+# @name login
+POST {{base}}/api/auth/login
+Content-Type: application/json
+
+{ "phone": "+919999999999", "password": "admin123" }
+
+### Authenticated: current user
+GET {{base}}/api/auth/me
+Authorization: Bearer {{login.response.body.data.token}}
+
+### Authenticated: create a business (district/block derived from village)
+POST {{base}}/api/businesses
+Content-Type: application/json
+Authorization: Bearer {{login.response.body.data.token}}
+
+{
+  "name": "New Shop",
+  "category": "grocery",
+  "phone": "+919447011111",
+  "address": "Main Road, Omassery",
+  "village": "{{villageId}}",
+  "isFeatured": true
+}
