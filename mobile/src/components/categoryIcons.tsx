@@ -1,0 +1,58 @@
+import {
+  Baby,
+  Briefcase,
+  Building2,
+  Bus,
+  Calendar,
+  Car,
+  Droplet,
+  Dumbbell,
+  GraduationCap,
+  HeartPulse,
+  Landmark,
+  LayoutGrid,
+  Leaf,
+  MapPin,
+  Megaphone,
+  Phone,
+  Pill,
+  Scissors,
+  ShoppingBag,
+  Siren,
+  Sparkles,
+  Store,
+  Utensils,
+  Wrench,
+} from 'lucide-react-native';
+
+// name -> lucide component. Names match the admin's CATEGORY_ICONS list.
+const REGISTRY: Record<string, typeof Store> = {
+  store: Store,
+  wrench: Wrench,
+  siren: Siren,
+  megaphone: Megaphone,
+  car: Car,
+  bus: Bus,
+  'heart-pulse': HeartPulse,
+  'graduation-cap': GraduationCap,
+  briefcase: Briefcase,
+  'layout-grid': LayoutGrid,
+  'map-pin': MapPin,
+  phone: Phone,
+  'shopping-bag': ShoppingBag,
+  utensils: Utensils,
+  pill: Pill,
+  'building-2': Building2,
+  calendar: Calendar,
+  sparkles: Sparkles,
+  droplet: Droplet,
+  leaf: Leaf,
+  landmark: Landmark,
+  dumbbell: Dumbbell,
+  scissors: Scissors,
+  baby: Baby,
+};
+
+export function categoryIcon(name?: string): typeof Store {
+  return (name && REGISTRY[name]) || LayoutGrid;
+}
