@@ -32,6 +32,12 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "a4684bc5-93c4-475e-bb89-89916c736a7d"
+      }
+    },
+    "owner": "nabeel1729"
   }
 }

@@ -7,7 +7,7 @@ import { Field } from '../components/fields';
 export function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
-  const [phone, setPhone] = useState('+919999999999');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -30,7 +30,7 @@ export function Login() {
     <div className="login-page">
       <form className="login-card" onSubmit={submit}>
         <h2>
-          Natt<span style={{ color: 'var(--primary)' }}>ile</span> Admin
+          One<span style={{ color: 'var(--primary)' }}>Village</span> Admin
         </h2>
         <p className="sub">Sign in to manage your locality</p>
 
@@ -57,7 +57,7 @@ export function Login() {
           {loading ? 'Signing in…' : 'Sign in'}
         </button>
 
-        <p className="hint">Seeded admin · +919999999999 / admin123</p>
+        <p className="hint"></p>
       </form>
     </div>
   );

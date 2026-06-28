@@ -65,7 +65,7 @@ export function LocationSelectScreen({ onDone }: { onDone: () => void }) {
         </View>
         <Text className="mt-3 text-[24px] font-extrabold text-white">Choose your location</Text>
         <Text className="mt-1 text-[14px] text-white/85">
-          Nattile shows shops, services and updates for your village.
+          OneVillage shows shops, services and updates for your village.
         </Text>
       </View>
 

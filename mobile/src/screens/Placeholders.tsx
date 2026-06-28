@@ -345,7 +345,7 @@ export function ProfileScreen({ onChangeLocation }: { onChangeLocation?: () => v
   const rows = [
     { Icon: MapPin, label: 'Change location', onPress: onChangeLocation },
     { Icon: HelpCircle, label: 'Help & support', onPress: () => Alert.alert('Help & support', 'Reach us at support@nattile.app') },
-    { Icon: Info, label: 'About Nattile', onPress: () => Alert.alert('About Nattile', 'Nattile · v1.0.0\nYour village, in your pocket.') },
+    { Icon: Info, label: 'About OneVillage', onPress: () => Alert.alert('About OneVillage', 'OneVillage · v1.0.0\nYour village, in your pocket.') },
   ];
 
   return (
@@ -466,7 +466,7 @@ export function ProfileScreen({ onChangeLocation }: { onChangeLocation?: () => v
         ))}
       </View>
 
-      <Text className="mt-5 text-center text-[13px] text-[#9CA3AF]">Nattile · v1.0.0</Text>
+      <Text className="mt-5 text-center text-[13px] text-[#9CA3AF]">OneVillage · v1.0.0</Text>
     </ScrollView>
   );
 }

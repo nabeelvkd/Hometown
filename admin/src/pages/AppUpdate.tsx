@@ -86,7 +86,7 @@ export function AppUpdate() {
             <input
               value={form.androidUrl ?? ''}
               onChange={(e) => set({ androidUrl: e.target.value })}
-              placeholder="https://play.google.com/store/apps/details?id=com.nabeel.nattile"
+              placeholder="https://play.google.com/store/apps/details?id=com.nabeel.OneVillage"
             />
           </Field>
 

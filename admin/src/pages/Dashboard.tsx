@@ -134,7 +134,7 @@ export function Dashboard() {
       )}
 
       <div className="card" style={{ padding: 24 }}>
-        <h3 style={{ marginTop: 0 }}>Welcome to the Nattile admin console</h3>
+        <h3 style={{ marginTop: 0 }}>Welcome to the OneVillage admin console</h3>
         <p className="muted">
           Use the locality selectors in the top bar to switch districts and blocks.
           All listings below are scoped to the selected location. Manage businesses,

@@ -44,7 +44,7 @@ export function Layout() {
 
   const Brand = (
     <div className="brand">
-      Natt<span>ile</span>
+      One<span>Village</span>
     </div>
   );
 

@@ -71,7 +71,7 @@ function Root() {
         return true;
       }
       // 4. On Home — confirm before quitting.
-      Alert.alert('Exit Nattile', 'Do you want to quit the app?', [
+      Alert.alert('Exit OneVillage', 'Do you want to quit the app?', [
         { text: 'Cancel', style: 'cancel' },
         { text: 'Quit', style: 'destructive', onPress: () => BackHandler.exitApp() },
       ]);
