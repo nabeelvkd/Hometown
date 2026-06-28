@@ -8,7 +8,7 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://YOUR-DEPLOYED-BACKEND/api"
+        "EXPO_PUBLIC_API_URL": "https://onevillage.onrender.com/api"
       }
     },
     "production": {
@@ -16,7 +16,7 @@
         "buildType": "app-bundle"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://YOUR-DEPLOYED-BACKEND/api"
+        "EXPO_PUBLIC_API_URL": "https://onevillage.onrender.com/api"
       }
     }
   },
