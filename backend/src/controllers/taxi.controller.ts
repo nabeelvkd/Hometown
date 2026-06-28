@@ -4,6 +4,7 @@ import { sendSuccess } from '../utils/response';
 import { ApiError } from '../utils/ApiError';
 import { buildPagination, paginationMeta } from '../utils/pagination';
 import { resolveVillageLocation } from '../services/location.service';
+import { destroyImage } from '../config/cloudinary';
 
 /** Derives district/block from the village so the chain stays consistent. */
 async function withLocation<T extends { village?: string }>(body: T) {
@@ -48,16 +49,23 @@ export const createTaxi = async (req: Request, res: Response) => {
 };
 
 export const updateTaxi = async (req: Request, res: Response) => {
+  const existing = await Taxi.findById(req.params.id).select('photo');
+  if (!existing) throw ApiError.notFound('Taxi not found');
   const taxi = await Taxi.findByIdAndUpdate(req.params.id, await withLocation(req.body), {
     new: true,
     runValidators: true,
   });
   if (!taxi) throw ApiError.notFound('Taxi not found');
+  // Photo replaced or cleared → drop the previous one from Cloudinary.
+  if (req.body.photo !== undefined && existing.photo && existing.photo !== taxi.photo) {
+    await destroyImage(existing.photo);
+  }
   sendSuccess(res, taxi);
 };
 
 export const deleteTaxi = async (req: Request, res: Response) => {
   const taxi = await Taxi.findByIdAndUpdate(req.params.id, { isActive: false }, { new: true });
   if (!taxi) throw ApiError.notFound('Taxi not found');
+  await destroyImage(taxi.photo);
   sendSuccess(res, { id: taxi._id, deleted: true });
 };

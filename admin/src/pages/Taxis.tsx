@@ -1,5 +1,6 @@
 import { CrudPage } from '../components/CrudPage';
 import { Field, Checkbox, Combobox } from '../components/fields';
+import { ImageUpload } from '../components/ImageUpload';
 import { taxiApi } from '../api/resources';
 import { VEHICLE_TYPES, labelFor } from '../constants';
 import type { Taxi } from '../types';
@@ -129,8 +130,8 @@ export function Taxis() {
               <input value={f.whatsapp} onChange={(e) => set({ whatsapp: e.target.value })} />
             </Field>
           </div>
-          <Field label="Driver photo URL">
-            <input value={f.photo} onChange={(e) => set({ photo: e.target.value })} placeholder="https://…" />
+          <Field label="Driver photo">
+            <ImageUpload value={f.photo} onChange={(url) => set({ photo: url })} shape="avatar" />
           </Field>
           <Field label="Description">
             <textarea rows={2} value={f.description} onChange={(e) => set({ description: e.target.value })} />

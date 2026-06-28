@@ -58,6 +58,8 @@ export interface Business {
   block: string;
   village: string;
   description?: string;
+  location?: { type: 'Point'; coordinates: [number, number] }; // [lng, lat] (response)
+  coordinates?: [number, number]; // [lng, lat] (input only — backend maps to location)
   isVerified: boolean;
   isFeatured: boolean;
   isActive: boolean;
@@ -159,6 +161,37 @@ export interface BusTrip {
   isActive: boolean;
 }
 
+export interface HomeCategory {
+  _id: string;
+  key: string;
+  label: string;
+  sub?: string;
+  icon: string;
+  color: string;
+  order: number;
+  isCustom: boolean;
+  template: 'link' | 'directory' | 'places';
+  link?: string;
+  isActive: boolean;
+  village: string;
+}
+
+export interface CategoryEntry {
+  _id: string;
+  category: string;
+  title: string;
+  subtitle?: string;
+  photo?: string;
+  phone?: string;
+  whatsapp?: string;
+  description?: string;
+  link?: string;
+  order: number;
+  isActive: boolean;
+}
+
+export type AdTarget = 'all' | 'district' | 'block' | 'village';
+
 export interface Ad {
   _id: string;
   title: string;
@@ -168,7 +201,10 @@ export interface Ad {
   image?: string;
   status: 'pending' | 'approved' | 'rejected';
   isActive: boolean;
+  target?: AdTarget;
   village?: string | { _id: string; name: string };
+  district?: string | { _id: string; name: string };
+  block?: string | { _id: string; name: string };
   createdByRole?: string;
   createdBy?: string | { _id: string; name: string; role: string };
   createdAt: string;
@@ -184,6 +220,18 @@ export interface AdminUser {
   block?: string;
   village?: string | { _id: string; name: string; nameMl?: string };
   isActive: boolean;
+}
+
+export interface AppUpdateConfig {
+  _id?: string;
+  latestVersion: string;
+  androidUrl?: string;
+  iosUrl?: string;
+  title: string;
+  message: string;
+  mandatory: boolean;
+  active: boolean;
+  updatedAt?: string;
 }
 
 export const ROLES = {

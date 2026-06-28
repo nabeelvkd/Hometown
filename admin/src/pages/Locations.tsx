@@ -5,7 +5,7 @@ import { locationApi, userApi } from '../api/resources';
 import { ApiError } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import { useLocationScope } from '../location/LocationContext';
-import { ROLES, type AdminUser } from '../types';
+import { ROLES, type AdminUser, type Block } from '../types';
 
 const MODAL_TITLE: Record<string, string> = {
   district: 'Add District',
@@ -38,27 +38,35 @@ export function Locations() {
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  // location form fields
+  // add-location form
   const [name, setName] = useState('');
   const [nameMl, setNameMl] = useState('');
   const [code, setCode] = useState('');
 
-  // local-admin management
+  // admins
   const [admins, setAdmins] = useState<AdminUser[]>([]);
-  const [adminVillage, setAdminVillage] = useState<{ id: string; name: string } | null>(null);
+  const loadAdmins = () =>
+    userApi.listAdmins().then((r) => setAdmins(r.data)).catch(() => setAdmins([]));
+  useEffect(() => {
+    loadAdmins();
+  }, []);
+
+  // manage-admins modal (for a village)
+  const [manageVillage, setManageVillage] = useState<{ id: string; name: string } | null>(null);
   const [aName, setAName] = useState('');
   const [aPhone, setAPhone] = useState('');
   const [aPassword, setAPassword] = useState('');
-  const [manage, setManage] = useState<AdminUser | null>(null);
-  const [resetPwd, setResetPwd] = useState('');
 
-  const loadAdmins = () => {
-    userApi
-      .listAdmins()
-      .then((res) => setAdmins(res.data))
-      .catch(() => setAdmins([]));
-  };
-  useEffect(loadAdmins, []);
+  // change-area modal
+  const [moveVillage, setMoveVillage] = useState<{ id: string; name: string } | null>(null);
+  const [moveDistrict, setMoveDistrict] = useState('');
+  const [moveBlocks, setMoveBlocks] = useState<Block[]>([]);
+  const [moveBlock, setMoveBlock] = useState('');
+
+  useEffect(() => {
+    if (!moveDistrict) return setMoveBlocks([]);
+    locationApi.listBlocks(moveDistrict).then((r) => setMoveBlocks(r.data)).catch(() => setMoveBlocks([]));
+  }, [moveDistrict]);
 
   if (user?.role !== ROLES.SUPER_ADMIN) {
     return (
@@ -69,7 +77,10 @@ export function Locations() {
     );
   }
 
-  const open = (kind: Exclude<ModalKind, null>) => {
+  const adminsForVillage = (vid: string) =>
+    admins.filter((a) => a.role === ROLES.LOCAL_ADMIN && villageIdOf(a) === vid);
+
+  const openAdd = (kind: Exclude<ModalKind, null>) => {
     setName('');
     setNameMl('');
     setCode('');
@@ -77,7 +88,7 @@ export function Locations() {
     setModal(kind);
   };
 
-  const save = async () => {
+  const saveLocation = async () => {
     setSaving(true);
     setError(null);
     try {
@@ -99,16 +110,9 @@ export function Locations() {
     }
   };
 
-  const openAdmin = (villageId: string, villageName: string) => {
-    setAdminVillage({ id: villageId, name: villageName });
-    setAName('');
-    setAPhone('');
-    setAPassword('');
-    setError(null);
-  };
-
-  const saveAdmin = async () => {
-    if (!adminVillage) return;
+  // ---- admins ----
+  const addAdmin = async () => {
+    if (!manageVillage) return;
     setSaving(true);
     setError(null);
     try {
@@ -116,10 +120,12 @@ export function Locations() {
         name: aName,
         phone: aPhone,
         password: aPassword,
-        village: adminVillage.id,
+        village: manageVillage.id,
       });
-      setAdminVillage(null);
-      loadAdmins();
+      setAName('');
+      setAPhone('');
+      setAPassword('');
+      await loadAdmins();
     } catch (e) {
       setError((e as ApiError).message);
     } finally {
@@ -127,20 +133,45 @@ export function Locations() {
     }
   };
 
-  const openManage = (admin: AdminUser) => {
-    setManage(admin);
-    setResetPwd('');
+  const resetPassword = async (admin: AdminUser) => {
+    const pw = window.prompt(`New password for ${admin.name} (min 6 characters)`);
+    if (!pw) return;
+    if (pw.length < 6) return setError('Password must be at least 6 characters.');
+    setError(null);
+    try {
+      await userApi.updateLocalAdmin(admin.id, { password: pw });
+      window.alert('Password updated.');
+    } catch (e) {
+      setError((e as ApiError).message);
+    }
+  };
+
+  const toggleAdmin = async (admin: AdminUser) => {
+    setError(null);
+    try {
+      await userApi.updateLocalAdmin(admin.id, { isActive: !admin.isActive });
+      await loadAdmins();
+    } catch (e) {
+      setError((e as ApiError).message);
+    }
+  };
+
+  // ---- change area ----
+  const openMove = (vid: string, vname: string) => {
+    setMoveVillage({ id: vid, name: vname });
+    setMoveDistrict(districtId);
+    setMoveBlock('');
     setError(null);
   };
 
-  const resetPassword = async () => {
-    if (!manage || resetPwd.length < 6) return;
+  const saveMove = async () => {
+    if (!moveVillage || !moveBlock) return;
     setSaving(true);
     setError(null);
     try {
-      await userApi.updateLocalAdmin(manage.id, { password: resetPwd });
-      setManage(null);
-      setResetPwd('');
+      await locationApi.updateVillage(moveVillage.id, { block: moveBlock });
+      setMoveVillage(null);
+      reloadVillages();
     } catch (e) {
       setError((e as ApiError).message);
     } finally {
@@ -148,139 +179,100 @@ export function Locations() {
     }
   };
 
-  const toggleDisabled = async () => {
-    if (!manage) return;
-    setSaving(true);
-    setError(null);
-    try {
-      const updated = await userApi.updateLocalAdmin(manage.id, { isActive: !manage.isActive });
-      setManage(updated.data);
-      loadAdmins();
-    } catch (e) {
-      setError((e as ApiError).message);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const adminForVillage = (vid: string) =>
-    admins.find((a) => a.role === ROLES.LOCAL_ADMIN && villageIdOf(a) === vid);
-
-  const districtName = districts.find((d) => d._id === districtId)?.name ?? '—';
-  const blockName = blocks.find((b) => b._id === blockId)?.name ?? '—';
+  const manageList = manageVillage ? adminsForVillage(manageVillage.id) : [];
 
   return (
-    <div className="hier-grid">
-      {/* Districts */}
-      <div>
-        <div className="toolbar">
-          <h3 style={{ margin: 0 }}>Districts</h3>
-          <button className="btn sm" onClick={() => open('district')}>+ Add</button>
+    <div>
+      {/* Selector toolbar */}
+      <div
+        className="card"
+        style={{ display: 'flex', gap: 12, alignItems: 'flex-end', flexWrap: 'wrap', padding: 14, marginBottom: 14 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <label className="muted" style={{ fontSize: 12 }}>District</label>
+          <select value={districtId} onChange={(e) => setDistrictId(e.target.value)} style={{ width: 200 }}>
+            {districts.map((d) => (
+              <option key={d._id} value={d._id}>
+                {d.name}
+              </option>
+            ))}
+          </select>
         </div>
-        <div className="card table-wrap">
-          <table>
-            <thead><tr><th>Name</th><th style={{ width: 80 }} /></tr></thead>
-            <tbody>
-              {districts.map((d) => (
-                <tr key={d._id} style={{ background: d._id === districtId ? 'var(--primary-soft)' : undefined }}>
-                  <td>
-                    <strong>{d.name}</strong>
-                    {d.nameMl && <div className="muted">{d.nameMl}</div>}
-                  </td>
-                  <td>
-                    <button className="btn-link" onClick={() => setDistrictId(d._id)} disabled={d._id === districtId}>
-                      {d._id === districtId ? '✓' : 'Open'}
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <button className="btn secondary sm" onClick={() => openAdd('district')}>+ District</button>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <label className="muted" style={{ fontSize: 12 }}>Area</label>
+          <select value={blockId} onChange={(e) => setBlockId(e.target.value)} style={{ width: 200 }} disabled={!districtId}>
+            <option value="">Select area</option>
+            {blocks.map((b) => (
+              <option key={b._id} value={b._id}>
+                {b.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <button className="btn secondary sm" onClick={() => openAdd('block')} disabled={!districtId}>+ Area</button>
+
+        <div style={{ marginLeft: 'auto' }}>
+          <button className="btn" onClick={() => openAdd('village')} disabled={!blockId}>+ Add village</button>
         </div>
       </div>
 
-      {/* Areas */}
-      <div>
-        <div className="toolbar">
-          <h3 style={{ margin: 0 }}>
-            Areas <span className="muted" style={{ fontWeight: 400, fontSize: 12 }}>· {districtName}</span>
-          </h3>
-          <button className="btn sm" onClick={() => open('block')} disabled={!districtId}>+ Add</button>
-        </div>
-        <div className="card table-wrap">
-          <table>
-            <thead><tr><th>Name</th><th style={{ width: 60 }} /></tr></thead>
-            <tbody>
-              {blocks.length === 0 ? (
-                <tr><td colSpan={2} className="empty">No areas yet.</td></tr>
-              ) : (
-                blocks.map((b) => (
-                  <tr key={b._id} style={{ background: b._id === blockId ? 'var(--primary-soft)' : undefined }}>
+      {error && !manageVillage && !moveVillage && !modal && <div className="alert error">{error}</div>}
+
+      {/* Villages table */}
+      <div className="card table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Village</th>
+              <th>Local admins</th>
+              <th style={{ width: 220 }}>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {!blockId ? (
+              <tr><td colSpan={3} className="empty">Select a district and area to see its villages.</td></tr>
+            ) : villages.length === 0 ? (
+              <tr><td colSpan={3} className="empty">No villages in this area yet.</td></tr>
+            ) : (
+              villages.map((v) => {
+                const vAdmins = adminsForVillage(v._id);
+                return (
+                  <tr key={v._id}>
                     <td>
-                      <strong>{b.name}</strong>
-                      {b.nameMl && <div className="muted">{b.nameMl}</div>}
+                      <strong>{v.name}</strong>
+                      {v.nameMl && <div className="muted">{v.nameMl}</div>}
                     </td>
                     <td>
-                      <button className="btn-link" onClick={() => setBlockId(b._id)} disabled={b._id === blockId}>
-                        {b._id === blockId ? '✓' : 'Open'}
-                      </button>
+                      {vAdmins.length === 0 ? (
+                        <span className="muted">None yet</span>
+                      ) : (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                          {vAdmins.map((a) => (
+                            <span key={a.id} className={`badge ${a.isActive ? 'green' : 'gray'}`}>
+                              {a.name}
+                              {a.isActive ? '' : ' · off'}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </td>
+                    <td>
+                      <div className="row-actions">
+                        <button className="btn-link" onClick={() => setManageVillage({ id: v._id, name: v.name })}>
+                          Manage admins
+                        </button>
+                        <button className="btn-link" onClick={() => openMove(v._id, v.name)}>
+                          Change area
+                        </button>
+                      </div>
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Villages + their local admin */}
-      <div>
-        <div className="toolbar">
-          <h3 style={{ margin: 0 }}>
-            Villages <span className="muted" style={{ fontWeight: 400, fontSize: 12 }}>· {blockName}</span>
-          </h3>
-          <button className="btn sm" onClick={() => open('village')} disabled={!blockId}>+ Add</button>
-        </div>
-        <div className="card table-wrap">
-          <table>
-            <thead><tr><th>Village</th><th>Local Admin</th></tr></thead>
-            <tbody>
-              {villages.length === 0 ? (
-                <tr><td colSpan={2} className="empty">No villages yet.</td></tr>
-              ) : (
-                villages.map((v) => {
-                  const admin = adminForVillage(v._id);
-                  return (
-                    <tr key={v._id}>
-                      <td>
-                        <strong>{v.name}</strong>
-                        {v.nameMl && <div className="muted">{v.nameMl}</div>}
-                      </td>
-                      <td>
-                        {admin ? (
-                          <div>
-                            <span className={`badge ${admin.isActive ? 'green' : 'gray'}`}>
-                              {admin.name}
-                              {admin.isActive ? '' : ' · disabled'}
-                            </span>
-                            <div className="muted" style={{ fontSize: 12, marginTop: 2 }}>{admin.phone}</div>
-                            <button className="btn-link" style={{ paddingLeft: 0 }} onClick={() => openManage(admin)}>
-                              Manage
-                            </button>
-                          </div>
-                        ) : (
-                          <button className="btn sm" onClick={() => openAdmin(v._id, v.name)}>
-                            + Create admin
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+                );
+              })
+            )}
+          </tbody>
+        </table>
       </div>
 
       {/* Add location modal */}
@@ -291,7 +283,9 @@ export function Locations() {
           footer={
             <>
               <button className="btn secondary" onClick={() => setModal(null)}>Cancel</button>
-              <button className="btn" onClick={save} disabled={saving}>{saving ? 'Saving…' : 'Save'}</button>
+              <button className="btn" onClick={saveLocation} disabled={saving || !name.trim()}>
+                {saving ? 'Saving…' : 'Save'}
+              </button>
             </>
           }
         >
@@ -310,85 +304,105 @@ export function Locations() {
         </Modal>
       )}
 
-      {/* Create local admin modal */}
-      {adminVillage && (
+      {/* Manage admins modal (multiple per village) */}
+      {manageVillage && (
         <Modal
-          title={`Create Local Admin · ${adminVillage.name}`}
-          onClose={() => setAdminVillage(null)}
+          title={`Local admins · ${manageVillage.name}`}
+          onClose={() => setManageVillage(null)}
+          footer={<button className="btn secondary" onClick={() => setManageVillage(null)}>Close</button>}
+        >
+          {error && <div className="alert error">{error}</div>}
+
+          {manageList.length === 0 ? (
+            <p className="muted" style={{ marginTop: 0 }}>No local admins yet for this village.</p>
+          ) : (
+            <div className="card table-wrap" style={{ marginBottom: 16 }}>
+              <table>
+                <thead>
+                  <tr><th>Admin</th><th style={{ width: 180 }} /></tr>
+                </thead>
+                <tbody>
+                  {manageList.map((a) => (
+                    <tr key={a.id}>
+                      <td>
+                        <strong>{a.name}</strong>
+                        <div className="muted" style={{ fontSize: 12 }}>
+                          {a.phone} · {a.isActive ? 'Active' : 'Disabled'}
+                        </div>
+                      </td>
+                      <td>
+                        <div className="row-actions">
+                          <button className="btn-link" onClick={() => resetPassword(a)}>Reset pw</button>
+                          <button className="btn-link danger" onClick={() => toggleAdmin(a)}>
+                            {a.isActive ? 'Disable' : 'Enable'}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          <h4 style={{ margin: '4px 0 8px' }}>Add a local admin</h4>
+          <p className="muted" style={{ marginTop: 0, fontSize: 13 }}>
+            A village can have multiple local admins — they all manage {manageVillage.name}.
+          </p>
+          <Field label="Admin name" required>
+            <input value={aName} onChange={(e) => setAName(e.target.value)} placeholder="e.g. Omassery Admin" />
+          </Field>
+          <div className="field-row">
+            <Field label="Phone (login)" required>
+              <input value={aPhone} onChange={(e) => setAPhone(e.target.value)} placeholder="+91XXXXXXXXXX" />
+            </Field>
+            <Field label="Password" required>
+              <input type="password" value={aPassword} onChange={(e) => setAPassword(e.target.value)} placeholder="min 6 characters" />
+            </Field>
+          </div>
+          <button
+            className="btn"
+            onClick={addAdmin}
+            disabled={saving || !aName.trim() || !aPhone.trim() || aPassword.length < 6}>
+            {saving ? 'Creating…' : '+ Create admin login'}
+          </button>
+        </Modal>
+      )}
+
+      {/* Change area modal */}
+      {moveVillage && (
+        <Modal
+          title={`Change area · ${moveVillage.name}`}
+          onClose={() => setMoveVillage(null)}
           footer={
             <>
-              <button className="btn secondary" onClick={() => setAdminVillage(null)}>Cancel</button>
-              <button className="btn" onClick={saveAdmin} disabled={saving}>
-                {saving ? 'Creating…' : 'Create login'}
+              <button className="btn secondary" onClick={() => setMoveVillage(null)}>Cancel</button>
+              <button className="btn" onClick={saveMove} disabled={saving || !moveBlock}>
+                {saving ? 'Moving…' : 'Move village'}
               </button>
             </>
           }
         >
           {error && <div className="alert error">{error}</div>}
           <p className="muted" style={{ marginTop: 0 }}>
-            This admin will manage <strong>only {adminVillage.name}</strong>. One village = one local admin.
+            Move <strong>{moveVillage.name}</strong> to a different district/area. Its local admins move with it.
           </p>
-          <Field label="Admin name" required>
-            <input value={aName} onChange={(e) => setAName(e.target.value)} placeholder="e.g. Omassery Admin" />
+          <Field label="District" required>
+            <select value={moveDistrict} onChange={(e) => { setMoveDistrict(e.target.value); setMoveBlock(''); }}>
+              <option value="">Select district</option>
+              {districts.map((d) => (
+                <option key={d._id} value={d._id}>{d.name}</option>
+              ))}
+            </select>
           </Field>
-          <Field label="Phone (login)" required>
-            <input value={aPhone} onChange={(e) => setAPhone(e.target.value)} placeholder="+91XXXXXXXXXX" />
+          <Field label="Area" required>
+            <select value={moveBlock} onChange={(e) => setMoveBlock(e.target.value)} disabled={!moveDistrict}>
+              <option value="">Select area</option>
+              {moveBlocks.map((b) => (
+                <option key={b._id} value={b._id}>{b.name}</option>
+              ))}
+            </select>
           </Field>
-          <Field label="Password" required>
-            <input type="password" value={aPassword} onChange={(e) => setAPassword(e.target.value)} placeholder="min 6 characters" />
-          </Field>
-        </Modal>
-      )}
-
-      {/* Manage existing local admin */}
-      {manage && (
-        <Modal
-          title={`Manage admin · ${manage.name}`}
-          onClose={() => setManage(null)}
-          footer={
-            <button className="btn secondary" onClick={() => setManage(null)}>
-              Close
-            </button>
-          }
-        >
-          {error && <div className="alert error">{error}</div>}
-          <p className="muted" style={{ marginTop: 0 }}>
-            {manage.phone} ·{' '}
-            <strong style={{ color: manage.isActive ? 'var(--success)' : 'var(--danger)' }}>
-              {manage.isActive ? 'Active' : 'Disabled'}
-            </strong>
-          </p>
-
-          <Field label="Reset password">
-            <input
-              type="password"
-              value={resetPwd}
-              onChange={(e) => setResetPwd(e.target.value)}
-              placeholder="New password (min 6 characters)"
-            />
-          </Field>
-          <button className="btn" onClick={resetPassword} disabled={saving || resetPwd.length < 6}>
-            {saving ? 'Saving…' : 'Reset password'}
-          </button>
-
-          <hr style={{ margin: '20px 0', border: 0, borderTop: '1px solid var(--border)' }} />
-
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div>
-              <strong>{manage.isActive ? 'Disable login' : 'Enable login'}</strong>
-              <div className="muted" style={{ fontSize: 13 }}>
-                {manage.isActive
-                  ? 'The admin will no longer be able to sign in.'
-                  : 'Restore this admin’s access.'}
-              </div>
-            </div>
-            <button
-              className={`btn ${manage.isActive ? 'danger' : ''}`}
-              onClick={toggleDisabled}
-              disabled={saving}>
-              {manage.isActive ? 'Disable' : 'Enable'}
-            </button>
-          </div>
         </Modal>
       )}
     </div>

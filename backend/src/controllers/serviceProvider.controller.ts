@@ -4,6 +4,7 @@ import { sendSuccess } from '../utils/response';
 import { ApiError } from '../utils/ApiError';
 import { buildPagination, paginationMeta } from '../utils/pagination';
 import { resolveVillageLocation } from '../services/location.service';
+import { destroyImage } from '../config/cloudinary';
 
 /** Derives district/block from the village so the chain stays consistent. */
 async function withLocation<T extends { village?: string }>(body: T) {
@@ -53,12 +54,18 @@ export const createProvider = async (req: Request, res: Response) => {
 };
 
 export const updateProvider = async (req: Request, res: Response) => {
+  const existing = await ServiceProvider.findById(req.params.id).select('photo');
+  if (!existing) throw ApiError.notFound('Service provider not found');
   const provider = await ServiceProvider.findByIdAndUpdate(
     req.params.id,
     await withLocation(req.body),
     { new: true, runValidators: true }
   );
   if (!provider) throw ApiError.notFound('Service provider not found');
+  // Photo replaced or cleared → drop the previous one from Cloudinary.
+  if (req.body.photo !== undefined && existing.photo && existing.photo !== provider.photo) {
+    await destroyImage(existing.photo);
+  }
   sendSuccess(res, provider);
 };
 
@@ -69,5 +76,6 @@ export const deleteProvider = async (req: Request, res: Response) => {
     { new: true }
   );
   if (!provider) throw ApiError.notFound('Service provider not found');
+  await destroyImage(provider.photo);
   sendSuccess(res, { id: provider._id, deleted: true });
 };

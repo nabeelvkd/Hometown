@@ -7,6 +7,7 @@ import { idParam } from '../validators/common';
 import {
   listAdsSchema,
   createAdSchema,
+  updateAdSchema,
   reviewAdSchema,
   publicAdsSchema,
 } from '../validators/ad.validator';
@@ -14,6 +15,7 @@ import {
   listPublicAds,
   listAds,
   createAd,
+  updateAd,
   reviewAd,
   deleteAd,
 } from '../controllers/ad.controller';
@@ -28,6 +30,7 @@ router.get('/public', validate(publicAdsSchema), asyncHandler(listPublicAds));
 // Admin listing + create (super_admin or local_admin).
 router.get('/', requireAuth, manager, validate(listAdsSchema), asyncHandler(listAds));
 router.post('/', requireAuth, manager, validate(createAdSchema), asyncHandler(createAd));
+router.put('/:id', requireAuth, manager, validate(updateAdSchema), asyncHandler(updateAd));
 
 // Approve / reject / toggle — super_admin only.
 router.put(

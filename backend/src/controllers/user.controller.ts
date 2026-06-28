@@ -30,21 +30,13 @@ function publicUser(user: {
 }
 
 /**
- * Creates the dedicated Local Admin for a village. Enforces the ownership
- * model: one village = one local admin. super_admin only.
+ * Creates a Local Admin for a village. A village can have multiple local
+ * admins (they all manage the same village). super_admin only.
  */
 export const createLocalAdmin = async (req: Request, res: Response) => {
   const { name, phone, email, password, village } = req.body;
 
   const loc = await resolveVillageLocation(village);
-
-  const existingAdmin = await User.findOne({
-    role: USER_ROLES.LOCAL_ADMIN,
-    village: loc.village,
-  });
-  if (existingAdmin) {
-    throw ApiError.conflict('This village already has a local admin');
-  }
 
   const phoneTaken = await User.findOne({ phone });
   if (phoneTaken) throw ApiError.conflict('Phone number already registered');

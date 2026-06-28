@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Field } from '../components/fields';
+import { ImageUpload } from '../components/ImageUpload';
 import { locationApi } from '../api/resources';
 import { ApiError } from '../api/client';
 import { useLocationScope } from '../location/LocationContext';
@@ -62,37 +63,9 @@ export function VillageSettings() {
         )}
 
         <div style={{ marginTop: 16 }}>
-          <Field label="Hero image URL">
-            <input
-              value={heroImage}
-              onChange={(e) => setHeroImage(e.target.value)}
-              placeholder="https://…/photo.jpg"
-              disabled={loading}
-            />
+          <Field label="Hero image">
+            <ImageUpload value={heroImage} onChange={setHeroImage} shape="banner" preset="hero" />
           </Field>
-
-          {heroImage ? (
-            <img
-              src={heroImage}
-              alt="Hero preview"
-              style={{ width: '100%', height: 180, objectFit: 'cover', borderRadius: 12, border: '1px solid var(--border)' }}
-              onError={(e) => ((e.target as HTMLImageElement).style.opacity = '0.3')}
-            />
-          ) : (
-            <div
-              style={{
-                height: 180,
-                borderRadius: 12,
-                border: '1px dashed var(--border)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'var(--text-muted)',
-                background: 'var(--surface-alt)',
-              }}>
-              No image set — the app shows a default.
-            </div>
-          )}
 
           <div style={{ marginTop: 16, display: 'flex', gap: 10 }}>
             <button className="btn" onClick={save} disabled={saving || loading}>

@@ -76,3 +76,24 @@ export async function api<T>(path: string, options: RequestOptions = {}): Promis
 
   return { data: json.data, meta: json.meta };
 }
+
+/** Uploads an image file to the backend (Cloudinary) and returns its URL. */
+export async function uploadImage(file: File): Promise<string> {
+  const token = getToken();
+  const form = new FormData();
+  form.append('image', file);
+  const res = await fetch(BASE_URL + '/uploads/image', {
+    method: 'POST',
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body: form,
+  });
+  const json = (await res.json().catch(() => null)) as
+    | { success: true; data: { url: string } }
+    | { success: false; error: { message: string } }
+    | null;
+  if (!res.ok || !json || json.success === false) {
+    if (res.status === 401) setToken(null);
+    throw new ApiError(res.status, json && !json.success ? json.error.message : `Upload failed (${res.status})`);
+  }
+  return json.data.url;
+}

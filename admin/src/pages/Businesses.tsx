@@ -1,5 +1,7 @@
 import { CrudPage } from '../components/CrudPage';
 import { Field, Checkbox, Combobox } from '../components/fields';
+import { ImageUpload } from '../components/ImageUpload';
+import { MapPicker } from '../components/MapPicker';
 import { businessApi } from '../api/resources';
 import { BUSINESS_CATEGORIES, labelFor } from '../constants';
 import type { Business } from '../types';
@@ -15,6 +17,8 @@ interface Form {
   workingHours: string;
   photos: string; // one URL per line
   description: string;
+  lat: number | null;
+  lng: number | null;
   isVerified: boolean;
   isFeatured: boolean;
 }
@@ -30,6 +34,8 @@ const blank: Form = {
   workingHours: '',
   photos: '',
   description: '',
+  lat: null,
+  lng: null,
   isVerified: false,
   isFeatured: false,
 };
@@ -94,6 +100,8 @@ export function Businesses() {
         workingHours: b.workingHours ?? '',
         photos: (b.photos ?? []).join('\n'),
         description: b.description ?? '',
+        lat: b.location?.coordinates ? b.location.coordinates[1] : null,
+        lng: b.location?.coordinates ? b.location.coordinates[0] : null,
         isVerified: b.isVerified,
         isFeatured: b.isFeatured,
       })}
@@ -108,6 +116,7 @@ export function Businesses() {
         workingHours: f.workingHours || undefined,
         photos: linesToArr(f.photos),
         description: f.description || undefined,
+        coordinates: f.lat != null && f.lng != null ? [f.lng, f.lat] : undefined,
         isVerified: f.isVerified,
         isFeatured: f.isFeatured,
         village: scope.villageId,
@@ -141,6 +150,34 @@ export function Businesses() {
           <Field label="Address" required>
             <input value={f.address} onChange={(e) => set({ address: e.target.value })} />
           </Field>
+          <Field label="Location on map">
+            <MapPicker lat={f.lat} lng={f.lng} onChange={(lat, lng) => set({ lat, lng })} />
+            <div
+              style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginTop: 8 }}>
+              <span className="muted" style={{ fontSize: 12 }}>
+                {f.lat != null && f.lng != null
+                  ? `📍 ${f.lat.toFixed(5)}, ${f.lng.toFixed(5)}`
+                  : 'Tap the map to drop a pin (or use your location).'}
+              </span>
+              <button
+                type="button"
+                className="btn-link"
+                onClick={() => {
+                  if (!navigator.geolocation) return;
+                  navigator.geolocation.getCurrentPosition(
+                    (pos) => set({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+                    () => undefined
+                  );
+                }}>
+                Use my location
+              </button>
+              {f.lat != null && (
+                <button type="button" className="btn-link danger" onClick={() => set({ lat: null, lng: null })}>
+                  Clear pin
+                </button>
+              )}
+            </div>
+          </Field>
           <Field label="Working hours">
             <input
               value={f.workingHours}
@@ -148,13 +185,23 @@ export function Businesses() {
               placeholder="e.g. Mon–Sat 9 AM – 8 PM"
             />
           </Field>
-          <Field label="Photo URLs (one per line)">
-            <textarea
-              rows={3}
-              value={f.photos}
-              onChange={(e) => set({ photos: e.target.value })}
-              placeholder="https://…/photo1.jpg"
+          <Field label="Photos">
+            <ImageUpload
+              value=""
+              onChange={(url) => set({ photos: (f.photos ? f.photos + '\n' : '') + url })}
+              shape="banner"
             />
+            {f.photos.trim() ? (
+              <textarea
+                rows={3}
+                value={f.photos}
+                onChange={(e) => set({ photos: e.target.value })}
+                style={{ marginTop: 8 }}
+              />
+            ) : null}
+            <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>
+              Upload one or more photos. The first is used as the cover.
+            </div>
           </Field>
           <Field label="Description">
             <textarea

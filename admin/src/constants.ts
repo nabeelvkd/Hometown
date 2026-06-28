@@ -27,6 +27,15 @@ export const VEHICLE_TYPES = [
   { value: 'bike', label: 'Bike Taxi' },
 ];
 
+// Icon names available for home-screen category tiles (must match the mobile
+// app's icon registry in src/components/categoryIcons.tsx).
+export const CATEGORY_ICONS = [
+  'store', 'wrench', 'siren', 'megaphone', 'car', 'bus', 'heart-pulse',
+  'graduation-cap', 'briefcase', 'layout-grid', 'map-pin', 'phone',
+  'shopping-bag', 'utensils', 'pill', 'building-2', 'calendar', 'sparkles',
+  'droplet', 'leaf', 'landmark', 'dumbbell', 'scissors', 'baby',
+];
+
 export const BUS_TAGS = [
   { value: 'ksrtc', label: 'KSRTC' },
   { value: 'private', label: 'Private' },

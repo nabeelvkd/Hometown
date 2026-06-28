@@ -13,8 +13,10 @@ const NAV = [
   { to: '/emergency-contacts', label: 'Emergency Contacts' },
   { to: '/announcements', label: 'Announcements' },
   { to: '/ads', label: 'Ads' },
+  { to: '/categories', label: 'Home Categories' },
   { to: '/village', label: 'Village Image' },
   { to: '/locations', label: 'Locations', superAdminOnly: true },
+  { to: '/app-update', label: 'App Update', superAdminOnly: true },
 ];
 
 export function Layout() {

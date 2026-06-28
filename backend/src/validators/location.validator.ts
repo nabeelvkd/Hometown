@@ -54,6 +54,7 @@ export const updateVillageSchema = z.object({
     heroImage: z.string().trim().url().or(z.literal('')).optional(),
     name: z.string().trim().min(1).max(120).optional(),
     nameMl: z.string().trim().max(120).optional(),
+    block: objectId.optional(), // move the village to another area/block
   }),
   params: z.object({ id: objectId }),
   query: z.any().optional(),

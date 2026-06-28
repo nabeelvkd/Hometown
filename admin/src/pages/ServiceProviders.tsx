@@ -1,5 +1,6 @@
 import { CrudPage } from '../components/CrudPage';
 import { Field, Checkbox, Combobox } from '../components/fields';
+import { ImageUpload } from '../components/ImageUpload';
 import { providerApi } from '../api/resources';
 import { SERVICE_CATEGORIES, labelFor } from '../constants';
 import type { ServiceProvider } from '../types';
@@ -126,12 +127,8 @@ export function ServiceProviders() {
               <input value={f.whatsapp} onChange={(e) => set({ whatsapp: e.target.value })} />
             </Field>
           </div>
-          <Field label="Photo URL (person / service)">
-            <input
-              value={f.photo}
-              onChange={(e) => set({ photo: e.target.value })}
-              placeholder="https://…/photo.jpg"
-            />
+          <Field label="Photo (person / service)">
+            <ImageUpload value={f.photo} onChange={(url) => set({ photo: url })} shape="avatar" />
           </Field>
           <Field label="Description">
             <textarea

@@ -12,8 +12,11 @@ import { Announcements } from './pages/Announcements';
 import { Taxis } from './pages/Taxis';
 import { BusTimes } from './pages/BusTimes';
 import { Ads } from './pages/Ads';
+import { Categories } from './pages/Categories';
+import { CategoryItems } from './pages/CategoryItems';
 import { VillageSettings } from './pages/VillageSettings';
 import { Locations } from './pages/Locations';
+import { AppUpdate } from './pages/AppUpdate';
 
 export default function App() {
   return (
@@ -38,8 +41,11 @@ export default function App() {
             <Route path="/emergency-contacts" element={<EmergencyContacts />} />
             <Route path="/announcements" element={<Announcements />} />
             <Route path="/ads" element={<Ads />} />
+            <Route path="/categories" element={<Categories />} />
+            <Route path="/category-items/:categoryId" element={<CategoryItems />} />
             <Route path="/village" element={<VillageSettings />} />
             <Route path="/locations" element={<Locations />} />
+            <Route path="/app-update" element={<AppUpdate />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

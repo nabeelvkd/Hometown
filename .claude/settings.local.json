@@ -18,7 +18,10 @@
       "Bash(node -e \"console.log\\(require\\('./package.json'\\).scripts.start\\)\")",
       "Bash(echo \"start script: $\\(node -e \"console.log\\(require\\('./package.json'\\).scripts.start\\)\"\\)\")",
       "Bash(node -e ' *)",
-      "PowerShell(Get-NetTCPConnection -LocalPort 5001 -State Listen -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }; Start-Sleep 1; \"5001 cleared\")"
+      "PowerShell(Get-NetTCPConnection -LocalPort 5001 -State Listen -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }; Start-Sleep 1; \"5001 cleared\")",
+      "Bash(node -e \"let d='';process.stdin.on\\('data',c=>d+=c\\).on\\('end',\\(\\)=>{const a=JSON.parse\\(d\\).data;console.log\\('count',a.length\\);a.forEach\\(x=>console.log\\('-',x.title,'| image:',x.image||'\\(none\\)','| status:',x.status\\)\\)}\\)\")",
+      "Bash(node -e \"let d='';process.stdin.on\\('data',c=>d+=c\\).on\\('end',\\(\\)=>{const a=JSON.parse\\(d\\).data;console.log\\('count',a.length\\);a.forEach\\(x=>console.log\\('-',x.title,'| image:',x.image?'YES':'\\(none\\)','| status:',x.status\\)\\)}\\)\")",
+      "Bash(node -e \"let d='';process.stdin.on\\('data',c=>d+=c\\).on\\('end',\\(\\)=>console.log\\('remaining ads:',JSON.parse\\(d\\).data.length\\)\\)\")"
     ]
   }
 }

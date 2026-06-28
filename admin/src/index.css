@@ -79,6 +79,10 @@ a {
   flex-direction: column;
   padding: 8px;
   gap: 2px;
+  /* Fill the space between brand and footer and scroll when items overflow. */
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .sidebar nav a {

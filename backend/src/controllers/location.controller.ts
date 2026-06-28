@@ -1,8 +1,23 @@
 import { Request, Response } from 'express';
-import { District, Block, Village, User } from '../models';
+import {
+  District,
+  Block,
+  Village,
+  User,
+  Business,
+  ServiceProvider,
+  Taxi,
+  BusTrip,
+  EmergencyContact,
+  Announcement,
+  HomeCategory,
+  CategoryEntry,
+  Ad,
+} from '../models';
 import { sendSuccess } from '../utils/response';
 import { ApiError } from '../utils/ApiError';
 import { USER_ROLES } from '../constants';
+import { destroyImage } from '../config/cloudinary';
 
 export const listDistricts = async (_req: Request, res: Response) => {
   const districts = await District.find({ isActive: true }).sort({ name: 1 });
@@ -65,11 +80,57 @@ export const updateVillage = async (req: Request, res: Response) => {
   if (req.body.name !== undefined) update.name = req.body.name;
   if (req.body.nameMl !== undefined) update.nameMl = req.body.nameMl;
 
+  // Moving the village to another area/block (super_admin only) — re-derive the
+  // district from the new block.
+  let movedBlock: unknown;
+  let movedDistrict: unknown;
+  if (req.body.block !== undefined) {
+    if (req.user?.role !== USER_ROLES.SUPER_ADMIN) {
+      throw ApiError.forbidden('Only the super admin can move a village');
+    }
+    const block = await Block.findById(req.body.block).select('district');
+    if (!block) throw ApiError.badRequest('Area/block does not exist');
+    update.block = block._id;
+    update.district = block.district;
+    movedBlock = block._id;
+    movedDistrict = block.district;
+  }
+
+  // Capture the current hero before overwriting so we can clean it up.
+  const oldHero =
+    req.body.heroImage !== undefined
+      ? (await Village.findById(req.params.id).select('heroImage'))?.heroImage
+      : undefined;
+
   const village = await Village.findByIdAndUpdate(req.params.id, update, {
     new: true,
     runValidators: true,
   });
   if (!village) throw ApiError.notFound('Village not found');
+
+  // Moving a village re-stamps the village's admins AND all its content with the
+  // new district/block, so everything stays consistent under the new area.
+  if (movedBlock) {
+    const filter = { village: village._id };
+    const set = { $set: { block: movedBlock, district: movedDistrict } };
+    await Promise.all([
+      User.updateMany(filter, set),
+      Business.updateMany(filter, set),
+      ServiceProvider.updateMany(filter, set),
+      Taxi.updateMany(filter, set),
+      BusTrip.updateMany(filter, set),
+      EmergencyContact.updateMany(filter, set),
+      Announcement.updateMany(filter, set),
+      HomeCategory.updateMany(filter, set),
+      CategoryEntry.updateMany(filter, set),
+      Ad.updateMany(filter, set),
+    ]);
+  }
+
+  // Hero image replaced or cleared → drop the previous one from Cloudinary.
+  if (oldHero && oldHero !== village.heroImage) {
+    await destroyImage(oldHero);
+  }
   sendSuccess(res, village);
 };
 

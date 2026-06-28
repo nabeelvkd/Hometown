@@ -4,6 +4,7 @@ import { sendSuccess } from '../utils/response';
 import { ApiError } from '../utils/ApiError';
 import { buildPagination, paginationMeta } from '../utils/pagination';
 import { resolveVillageLocation } from '../services/location.service';
+import { destroyImages } from '../config/cloudinary';
 
 /** Maps an optional [lng,lat] coordinates field onto a GeoJSON location. */
 function withCoordinates<T extends { coordinates?: [number, number] }>(body: T) {
@@ -66,12 +67,19 @@ export const createBusiness = async (req: Request, res: Response) => {
 };
 
 export const updateBusiness = async (req: Request, res: Response) => {
+  const existing = await Business.findById(req.params.id).select('photos');
+  if (!existing) throw ApiError.notFound('Business not found');
   const business = await Business.findByIdAndUpdate(
     req.params.id,
     await withLocation(req.body),
     { new: true, runValidators: true }
   );
   if (!business) throw ApiError.notFound('Business not found');
+  // Gallery edited → drop any photos that are no longer referenced.
+  if (Array.isArray(req.body.photos)) {
+    const kept = new Set(business.photos);
+    await destroyImages(existing.photos.filter((p) => !kept.has(p)));
+  }
   sendSuccess(res, business);
 };
 
@@ -83,5 +91,6 @@ export const deleteBusiness = async (req: Request, res: Response) => {
     { new: true }
   );
   if (!business) throw ApiError.notFound('Business not found');
+  await destroyImages(business.photos);
   sendSuccess(res, { id: business._id, deleted: true });
 };

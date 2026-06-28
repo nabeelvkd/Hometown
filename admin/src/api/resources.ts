@@ -3,11 +3,14 @@ import type {
   Ad,
   AdminUser,
   Announcement,
+  AppUpdateConfig,
   AuthUser,
   Block,
   Business,
   BusTrip,
+  CategoryEntry,
   District,
+  HomeCategory,
   EmergencyContact,
   ServiceProvider,
   Taxi,
@@ -57,8 +60,19 @@ export const locationApi = {
   createVillage: (body: { name: string; nameMl?: string; block: string }) =>
     api<Village>('/locations/villages', { method: 'POST', body }),
   getVillage: (id: string) => api<Village & { heroImage?: string }>(`/locations/villages/${id}`),
-  updateVillage: (id: string, body: { heroImage?: string; name?: string; nameMl?: string }) =>
-    api<Village>(`/locations/villages/${id}`, { method: 'PUT', body }),
+  updateVillage: (
+    id: string,
+    body: { heroImage?: string; name?: string; nameMl?: string; block?: string }
+  ) => api<Village>(`/locations/villages/${id}`, { method: 'PUT', body }),
+};
+
+/* ---------- App devices (unique users — super admin) ---------- */
+export const deviceApi = {
+  stats: (district?: string) =>
+    api<{ total: number; villages: { village: string; name: string; count: number }[] }>(
+      '/devices/stats',
+      { query: { district } }
+    ),
 };
 
 /* ---------- Taxis ---------- */
@@ -79,11 +93,67 @@ export const busTripApi = {
   remove: (id: string) => api<{ id: string }>(`/bus-trips/${id}`, { method: 'DELETE' }),
 };
 
+/* ---------- Home categories ---------- */
+export const homeCategoryApi = {
+  adminList: (village?: string) =>
+    api<HomeCategory[]>('/home-categories/admin', { query: { village } }),
+  create: (body: {
+    label: string;
+    sub?: string;
+    icon?: string;
+    color?: string;
+    link?: string;
+    template?: string;
+    village?: string;
+  }) => api<HomeCategory>('/home-categories', { method: 'POST', body }),
+  update: (
+    id: string,
+    body: {
+      label?: string;
+      sub?: string;
+      icon?: string;
+      color?: string;
+      link?: string;
+      template?: string;
+      isActive?: boolean;
+    }
+  ) => api<HomeCategory>(`/home-categories/${id}`, { method: 'PUT', body }),
+  reorder: (village: string, ids: string[]) =>
+    api<HomeCategory[]>('/home-categories/reorder', { method: 'PUT', body: { village, ids } }),
+  remove: (id: string) => api<{ id: string }>(`/home-categories/${id}`, { method: 'DELETE' }),
+};
+
+/* ---------- Category items (for custom templated categories) ---------- */
+export const categoryEntryApi = {
+  list: (category: string) => api<CategoryEntry[]>('/category-entries/admin', { query: { category } }),
+  create: (body: Partial<CategoryEntry> & { category: string }) =>
+    api<CategoryEntry>('/category-entries', { method: 'POST', body }),
+  update: (id: string, body: Partial<CategoryEntry>) =>
+    api<CategoryEntry>(`/category-entries/${id}`, { method: 'PUT', body }),
+  remove: (id: string) => api<{ id: string }>(`/category-entries/${id}`, { method: 'DELETE' }),
+};
+
 /* ---------- Ads ---------- */
 export const adApi = {
   list: (status?: string) => api<Ad[]>('/ads', { query: { status } }),
-  create: (body: Partial<Ad> & { village?: string }) =>
-    api<Ad>('/ads', { method: 'POST', body }),
+  create: (
+    body: Partial<Ad> & {
+      target?: string;
+      village?: string;
+      block?: string;
+      district?: string;
+    }
+  ) => api<Ad>('/ads', { method: 'POST', body }),
+  update: (
+    id: string,
+    body: Partial<Ad> & {
+      target?: string;
+      village?: string;
+      block?: string;
+      district?: string;
+      isActive?: boolean;
+    }
+  ) => api<Ad>(`/ads/${id}`, { method: 'PUT', body }),
   review: (id: string, body: { status?: string; isActive?: boolean }) =>
     api<Ad>(`/ads/${id}/review`, { method: 'PUT', body }),
   remove: (id: string) => api<{ id: string }>(`/ads/${id}`, { method: 'DELETE' }),
@@ -120,6 +190,13 @@ export const emergencyApi = {
     api<EmergencyContact>(`/emergency-contacts/${id}`, { method: 'PUT', body }),
   remove: (id: string) =>
     api<{ id: string }>(`/emergency-contacts/${id}`, { method: 'DELETE' }),
+};
+
+/* ---------- App update (super admin) ---------- */
+export const appUpdateApi = {
+  get: () => api<AppUpdateConfig>('/app-update'),
+  update: (body: Partial<AppUpdateConfig>) =>
+    api<AppUpdateConfig>('/app-update', { method: 'PUT', body }),
 };
 
 /* ---------- Announcements ---------- */
