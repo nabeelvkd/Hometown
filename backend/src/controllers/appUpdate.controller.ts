@@ -48,6 +48,16 @@ export const checkUpdate = async (req: Request, res: Response) => {
   });
 };
 
+/** Public — latest published version + download links (for the website). */
+export const getLatest = async (_req: Request, res: Response) => {
+  const cfg = await AppUpdate.findOne();
+  sendSuccess(res, {
+    version: cfg?.latestVersion || '',
+    androidUrl: cfg?.androidUrl || '',
+    iosUrl: cfg?.iosUrl || '',
+  });
+};
+
 /** super_admin — read the current config to populate the admin form. */
 export const getUpdateConfig = async (_req: Request, res: Response) => {
   const cfg = await getOrInit();
