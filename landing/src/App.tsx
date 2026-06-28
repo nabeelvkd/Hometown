@@ -265,7 +265,14 @@ export function App() {
             <a href="#advertise">Advertise</a>
             <a href="#download">Download</a>
           </nav>
-          <DownloadButton />
+          <a
+            className="btn primary nav-dl"
+            href={apk || '#download'}
+            {...(apk ? { target: '_blank', rel: 'noreferrer' } : {})}>
+            <I.android className="ico" />
+            <span className="t-full">Download for Android</span>
+            <span className="t-short">Download</span>
+          </a>
         </div>
       </header>
 
